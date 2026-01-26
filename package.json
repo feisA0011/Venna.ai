@@ -1,0 +1,20 @@
+{
+  "name": "venna",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "perf:budgets": "turbo run perf:budgets",
+    "perf:lighthouse": "turbo run perf:lighthouse"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.4"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@venna/perf",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "perf:budgets": "node scripts/budgets.js",
+    "perf:lighthouse": "node scripts/lighthouse.js"
+  }
+}
