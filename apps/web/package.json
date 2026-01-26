@@ -1,0 +1,32 @@
+{
+  "name": "@venna/web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@venna/ui": "workspace:*",
+    "@clerk/nextjs": "^6.5.0",
+    "@sentry/nextjs": "^8.47.0",
+    "convex": "^1.17.0",
+    "next": "16.0.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@venna/config": "workspace:*",
+    "@types/node": "^20.14.11",
+    "@types/react": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "16.0.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
+  }
+}

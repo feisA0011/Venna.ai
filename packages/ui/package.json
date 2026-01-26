@@ -1,0 +1,19 @@
+{
+  "name": "@venna/ui",
+  "private": true,
+  "version": "0.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@venna/config": "workspace:*",
+    "eslint": "^9.17.0",
+    "typescript": "^5.6.3"
+  }
+}
