@@ -1,0 +1,18 @@
+{
+  "name": "@venna/widget",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "node scripts/build.js",
+    "widget-test": "node scripts/widget-test.js",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@venna/config": "workspace:*",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.17.0",
+    "typescript": "^5.6.3"
+  }
+}

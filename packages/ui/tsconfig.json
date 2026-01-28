@@ -1,0 +1,4 @@
+{
+  "extends": "@venna/config/tsconfig.base.json",
+  "include": ["src"]
+}
