@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 
-const lowConfidenceTerms = ["allergen", "allergy", "shellfish", "gluten", "vegan"];
-
 export async function POST(request: Request) {
   const { venueId, question } = (await request.json()) as {
     venueId?: string;
@@ -10,11 +8,12 @@ export async function POST(request: Request) {
   if (!venueId || !question) {
     return NextResponse.json({ error: "Missing input" }, { status: 400 });
   }
-  const lowered = question.toLowerCase();
-  const isLow = lowConfidenceTerms.some((term) => lowered.includes(term));
-  const confidence = isLow ? 0.45 : 0.84;
-  const answer = isLow
-    ? "I want to confirm this with the venue staff to avoid mistakes."
-    : "The venue is open today and can assist with reservations. For detailed updates, I can check with staff.";
+  const token = request.headers.get("X-Venna-Token");
+  if (!token || !token.includes(`_${venueId}_`)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const confidence = 0.0;
+  const answer =
+    "I don't have approved venue knowledge for that yet, so I'll check with staff to confirm.";
   return NextResponse.json({ answer, confidence });
 }
