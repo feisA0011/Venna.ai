@@ -17,12 +17,17 @@ export const createConversation = mutation({
 
 export const addMessage = mutation({
   args: {
+    venueId: v.id("venues"),
     conversationId: v.id("conversations"),
     sender: v.string(),
     content: v.string(),
     confidence: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.venueId !== args.venueId) {
+      throw new Error("Conversation not found for venue");
+    }
     await ctx.db.insert("messages", {
       conversationId: args.conversationId,
       sender: args.sender,

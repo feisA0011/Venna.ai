@@ -29,9 +29,12 @@ export default defineSchema({
   }).index("by_venue", ["venueId"]),
   embeddings: defineTable({
     documentId: v.id("documents"),
+    venueId: v.id("venues"),
     vector: v.array(v.number()),
     createdAt: v.number()
-  }).index("by_document", ["documentId"]),
+  })
+    .index("by_document", ["documentId"])
+    .index("by_venue", ["venueId"]),
   escalations: defineTable({
     venueId: v.id("venues"),
     conversationId: v.id("conversations"),

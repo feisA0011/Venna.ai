@@ -2,9 +2,23 @@ import { mutation } from "convex/server";
 import { v } from "convex/values";
 import { cosineSimilarity, fakeEmbed } from "./ai";
 
-const buildAnswer = (question: string, context: string[]) => {
+type Citation = {
+  documentId: string;
+  title: string;
+  source: string;
+};
+
+const buildAnswer = (question: string, context: string[], citations: Citation[]) => {
   const contextText = context.join(" ");
-  return `Based on the venue knowledge: ${contextText}\n\nQuestion: ${question}`;
+  const citationLines = citations
+    .map((citation) => `- ${citation.title} (${citation.source})`)
+    .join("\n");
+  return [
+    `Based on approved venue knowledge: ${contextText}`,
+    `Question: ${question}`,
+    "Sources:",
+    citationLines
+  ].join("\n\n");
 };
 
 export const answerQuestion = mutation({
@@ -18,18 +32,28 @@ export const answerQuestion = mutation({
     if (!venue) {
       throw new Error("Venue not found");
     }
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || conversation.venueId !== args.venueId) {
+      throw new Error("Conversation not found for venue");
+    }
 
     const documents = await ctx.db
       .query("documents")
       .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
       .collect();
-    const embeddings = await ctx.db.query("embeddings").collect();
+    const embeddings = await ctx.db
+      .query("embeddings")
+      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
+      .collect();
+    const embeddingByDocument = new Map(
+      embeddings.map((item) => [item.documentId, item])
+    );
 
     const queryVector = fakeEmbed(args.question);
 
     const ranked = documents
       .map((doc) => {
-        const embedding = embeddings.find((item) => item.documentId === doc._id);
+        const embedding = embeddingByDocument.get(doc._id);
         const score = embedding ? cosineSimilarity(queryVector, embedding.vector) : 0;
         return { doc, score };
       })
@@ -38,8 +62,21 @@ export const answerQuestion = mutation({
 
     const topScore = ranked[0]?.score ?? 0;
     const confidence = Math.max(0, Math.min(1, topScore));
-    const answer = confidence >= venue.confidenceThreshold
-      ? buildAnswer(args.question, ranked.map((item) => item.doc.content))
+    const citations = ranked
+      .filter((item) => item.score > 0)
+      .map((item) => ({
+        documentId: item.doc._id,
+        title: item.doc.title,
+        source: item.doc.source
+      }));
+    const hasApprovedKnowledge = citations.length > 0;
+    const allowAnswer = confidence >= venue.confidenceThreshold && hasApprovedKnowledge;
+    const answer = allowAnswer
+      ? buildAnswer(
+          args.question,
+          ranked.map((item) => item.doc.content),
+          citations
+        )
       : "I want to double-check with the venue staff before answering.";
 
     await ctx.db.insert("messages", {
@@ -65,7 +102,8 @@ export const answerQuestion = mutation({
     return {
       answer,
       confidence,
-      escalationId
+      escalationId,
+      citations
     };
   }
 });

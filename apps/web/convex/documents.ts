@@ -20,6 +20,7 @@ export const ingestDocument = mutation({
     const vector = fakeEmbed(`${args.title}\n${args.content}`);
     await ctx.db.insert("embeddings", {
       documentId,
+      venueId: args.venueId,
       vector,
       createdAt: Date.now()
     });
@@ -38,11 +39,17 @@ export const searchDocuments = query({
       .query("documents")
       .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
       .collect();
-    const embeddings = await ctx.db.query("embeddings").collect();
+    const embeddings = await ctx.db
+      .query("embeddings")
+      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
+      .collect();
+    const embeddingByDocument = new Map(
+      embeddings.map((item) => [item.documentId, item])
+    );
     const queryVector = fakeEmbed(args.query);
 
     const scored = docs.map((doc) => {
-      const embedding = embeddings.find((item) => item.documentId === doc._id);
+      const embedding = embeddingByDocument.get(doc._id);
       const score = embedding ? cosineSimilarity(queryVector, embedding.vector) : 0;
       return { doc, score };
     });
