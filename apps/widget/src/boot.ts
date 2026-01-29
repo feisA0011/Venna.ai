@@ -1,20 +1,22 @@
-const scriptTag = document.currentScript as HTMLScriptElement | null;
-const venueId = scriptTag?.dataset.venueId ?? "";
-const apiBase = scriptTag?.dataset.apiBase ?? "";
+const bootScriptTag = document.currentScript as HTMLScriptElement;
+const bootVenueId = bootScriptTag?.dataset.venueId ?? "";
+const bootApiBase = bootScriptTag?.dataset.apiBase ?? "";
+const widgetBase = new URL(bootScriptTag.src).origin; // Get the widget server URL
 
 const loadUi = () => {
   if (document.getElementById("venna-widget-ui")) return;
+
   const script = document.createElement("script");
   script.id = "venna-widget-ui";
-  script.src = `${apiBase}/widget/ui.js`;
+  script.src = `${widgetBase}/ui.js`; // Load from widget server, not API
   script.defer = true;
-  script.dataset.venueId = venueId;
-  script.dataset.apiBase = apiBase;
+  script.dataset.venueId = bootVenueId;
+  script.dataset.apiBase = bootApiBase;
   document.body.appendChild(script);
 };
 
 const attachIntent = () => {
-  const intentEvents: (keyof HTMLElementEventMap)[] = ["click", "mouseover"];
+  const intentEvents = ["click", "mouseover"];
   intentEvents.forEach((event) => {
     window.addEventListener(event, loadUi, { once: true, passive: true });
   });

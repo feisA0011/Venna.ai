@@ -1,82 +1,59 @@
-export {};
-
-type VennaThemeOptions = {
-  accent?: string;
-  background?: string;
-  foreground?: string;
-  glassAlpha?: number;
-  radius?: number;
-};
-
-declare global {
-  interface Window {
-    VennaWidget?: {
-      init: (options: VennaThemeOptions) => void;
-    };
-  }
-}
-
-const scriptTag = document.currentScript as HTMLScriptElement | null;
-const venueId = scriptTag?.dataset.venueId ?? "";
-const apiBase = scriptTag?.dataset.apiBase ?? "";
-
-const state = {
-  open: false,
-  token: "",
-  theme: {
-    accent: "#fe1541",
-    background: "rgba(255,255,255,0.16)",
-    foreground: "#111111",
-    glassAlpha: 0.16,
-    radius: 18,
-  },
-};
-
-const ensureToken = async () => {
-  if (state.token || !apiBase) return;
-  const response = await fetch(`${apiBase}/api/widget/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ venueId }),
-  });
-  if (!response.ok) return;
-  const data = (await response.json()) as { token: string };
-  state.token = data.token;
-};
-
-const createShadowRoot = () => {
-  const host = document.createElement("div");
-  host.id = "venna-widget";
-  document.body.appendChild(host);
-  const root = host.attachShadow({ mode: "open" });
-  return { root, host };
-};
-
-const { root, host } = createShadowRoot();
-
-const applyTheme = (options: VennaThemeOptions) => {
-  state.theme = {
-    accent: options.accent ?? state.theme.accent,
-    background: options.background ?? state.theme.background,
-    foreground: options.foreground ?? state.theme.foreground,
-    glassAlpha: options.glassAlpha ?? state.theme.glassAlpha,
-    radius: options.radius ?? state.theme.radius,
+"use strict";
+(() => {
+  // src/ui.ts
+  var scriptTag = document.currentScript;
+  var venueId = scriptTag?.dataset.venueId ?? "";
+  var apiBase = scriptTag?.dataset.apiBase ?? "";
+  var state = {
+    open: false,
+    token: "",
+    theme: {
+      accent: "#fe1541",
+      background: "rgba(255,255,255,0.16)",
+      foreground: "#111111",
+      glassAlpha: 0.16,
+      radius: 18
+    }
   };
-  host.style.setProperty("--venna-accent", state.theme.accent);
-  host.style.setProperty("--venna-bg", state.theme.background);
-  host.style.setProperty("--venna-fg", state.theme.foreground);
-  host.style.setProperty("--venna-glass-alpha", String(state.theme.glassAlpha));
-  host.style.setProperty("--venna-radius", `${state.theme.radius}px`);
-};
-
-window.VennaWidget = {
-  init: (options: VennaThemeOptions) => applyTheme(options),
-};
-
-applyTheme({});
-
-const style = document.createElement("style");
-style.textContent = `
+  var ensureToken = async () => {
+    if (state.token || !apiBase) return;
+    const response = await fetch(`${apiBase}/api/widget/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ venueId })
+    });
+    if (!response.ok) return;
+    const data = await response.json();
+    state.token = data.token;
+  };
+  var createShadowRoot = () => {
+    const host2 = document.createElement("div");
+    host2.id = "venna-widget";
+    document.body.appendChild(host2);
+    const root2 = host2.attachShadow({ mode: "open" });
+    return { root: root2, host: host2 };
+  };
+  var { root, host } = createShadowRoot();
+  var applyTheme = (options) => {
+    state.theme = {
+      accent: options.accent ?? state.theme.accent,
+      background: options.background ?? state.theme.background,
+      foreground: options.foreground ?? state.theme.foreground,
+      glassAlpha: options.glassAlpha ?? state.theme.glassAlpha,
+      radius: options.radius ?? state.theme.radius
+    };
+    host.style.setProperty("--venna-accent", state.theme.accent);
+    host.style.setProperty("--venna-bg", state.theme.background);
+    host.style.setProperty("--venna-fg", state.theme.foreground);
+    host.style.setProperty("--venna-glass-alpha", String(state.theme.glassAlpha));
+    host.style.setProperty("--venna-radius", `${state.theme.radius}px`);
+  };
+  window.VennaWidget = {
+    init: (options) => applyTheme(options)
+  };
+  applyTheme({});
+  var style = document.createElement("style");
+  style.textContent = `
   :host {
     --venna-accent: #fe1541;
     --venna-bg: rgba(255,255,255,0.16);
@@ -404,176 +381,139 @@ style.textContent = `
     }
   }
 `;
-root.appendChild(style);
-
-const wrapper = document.createElement("div");
-wrapper.className = "venna-root";
-
-const orb = document.createElement("button");
-orb.type = "button";
-orb.className = "venna-orb";
-orb.setAttribute("aria-label", "Open Venna chat");
-
-const orbShine = document.createElement("span");
-orbShine.className = "venna-orb__shine";
-
-const orbLabel = document.createElement("span");
-orbLabel.className = "venna-orb__label";
-orbLabel.textContent = "Venna";
-
-orb.appendChild(orbShine);
-orb.appendChild(orbLabel);
-
-const panel = document.createElement("div");
-panel.className = "venna-chat";
-
-const header = document.createElement("div");
-header.className = "venna-chat__header";
-
-const headerTitle = document.createElement("div");
-headerTitle.textContent = "Venue";
-
-const status = document.createElement("div");
-status.className = "venna-chat__status";
-status.textContent = "Online";
-
-const closeButton = document.createElement("button");
-closeButton.className = "venna-chat__close";
-closeButton.setAttribute("aria-label", "Close chat");
-closeButton.textContent = "×";
-
-const headerLeft = document.createElement("div");
-headerLeft.style.display = "flex";
-headerLeft.style.flexDirection = "column";
-headerLeft.style.gap = "4px";
-headerLeft.appendChild(headerTitle);
-headerLeft.appendChild(status);
-
-header.appendChild(headerLeft);
-header.appendChild(closeButton);
-
-const messages = document.createElement("div");
-messages.className = "venna-chat__messages";
-
-const typing = document.createElement("div");
-typing.className = "venna-typing";
-typing.setAttribute("aria-hidden", "true");
-for (let i = 0; i < 3; i += 1) {
-  typing.appendChild(document.createElement("span"));
-}
-
-const inputRow = document.createElement("div");
-inputRow.className = "venna-inputbar";
-
-const input = document.createElement("textarea");
-input.className = "venna-input";
-input.rows = 1;
-input.placeholder = "Ask about hours, menu, policies...";
-
-const send = document.createElement("button");
-send.className = "venna-send";
-send.setAttribute("aria-label", "Send message");
-
-inputRow.appendChild(input);
-inputRow.appendChild(send);
-
-panel.appendChild(header);
-panel.appendChild(messages);
-panel.appendChild(typing);
-panel.appendChild(inputRow);
-
-wrapper.appendChild(orb);
-wrapper.appendChild(panel);
-root.appendChild(wrapper);
-
-typing.style.display = "none";
-
-const isNearBottom = () => {
-  const threshold = 36;
-  return (
-    messages.scrollHeight - messages.scrollTop - messages.clientHeight <
-    threshold
-  );
-};
-
-const appendMessage = (content: string, type: "user" | "assistant") => {
-  const shouldScroll = isNearBottom();
-  const wrapperEl = document.createElement("div");
-  wrapperEl.className = `venna-msg venna-msg--${type}`;
-
-  const bubble = document.createElement("div");
-  bubble.className = "venna-msg__bubble venna-msg__enter";
-  bubble.textContent = content;
-
-  wrapperEl.appendChild(bubble);
-  messages.appendChild(wrapperEl);
-
-  if (shouldScroll) {
-    messages.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
+  root.appendChild(style);
+  var wrapper = document.createElement("div");
+  wrapper.className = "venna-root";
+  var orb = document.createElement("button");
+  orb.type = "button";
+  orb.className = "venna-orb";
+  orb.setAttribute("aria-label", "Open Venna chat");
+  var orbShine = document.createElement("span");
+  orbShine.className = "venna-orb__shine";
+  var orbLabel = document.createElement("span");
+  orbLabel.className = "venna-orb__label";
+  orbLabel.textContent = "Venna";
+  orb.appendChild(orbShine);
+  orb.appendChild(orbLabel);
+  var panel = document.createElement("div");
+  panel.className = "venna-chat";
+  var header = document.createElement("div");
+  header.className = "venna-chat__header";
+  var headerTitle = document.createElement("div");
+  headerTitle.textContent = "Venue";
+  var status = document.createElement("div");
+  status.className = "venna-chat__status";
+  status.textContent = "Online";
+  var closeButton = document.createElement("button");
+  closeButton.className = "venna-chat__close";
+  closeButton.setAttribute("aria-label", "Close chat");
+  closeButton.textContent = "\xD7";
+  var headerLeft = document.createElement("div");
+  headerLeft.style.display = "flex";
+  headerLeft.style.flexDirection = "column";
+  headerLeft.style.gap = "4px";
+  headerLeft.appendChild(headerTitle);
+  headerLeft.appendChild(status);
+  header.appendChild(headerLeft);
+  header.appendChild(closeButton);
+  var messages = document.createElement("div");
+  messages.className = "venna-chat__messages";
+  var typing = document.createElement("div");
+  typing.className = "venna-typing";
+  typing.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < 3; i += 1) {
+    typing.appendChild(document.createElement("span"));
   }
-};
-
-const showTyping = (visible: boolean) => {
-  typing.style.display = visible ? "inline-flex" : "none";
-};
-
-const togglePanel = () => {
-  const nextOpen = !state.open;
-  const runToggle = () => {
-    state.open = nextOpen;
-    panel.classList.toggle("is-open", state.open);
-    if (state.open) {
-      ensureToken().catch(() => undefined);
+  var inputRow = document.createElement("div");
+  inputRow.className = "venna-inputbar";
+  var input = document.createElement("textarea");
+  input.className = "venna-input";
+  input.rows = 1;
+  input.placeholder = "Ask about hours, menu, policies...";
+  var send = document.createElement("button");
+  send.className = "venna-send";
+  send.setAttribute("aria-label", "Send message");
+  inputRow.appendChild(input);
+  inputRow.appendChild(send);
+  panel.appendChild(header);
+  panel.appendChild(messages);
+  panel.appendChild(typing);
+  panel.appendChild(inputRow);
+  wrapper.appendChild(orb);
+  wrapper.appendChild(panel);
+  root.appendChild(wrapper);
+  typing.style.display = "none";
+  var isNearBottom = () => {
+    const threshold = 36;
+    return messages.scrollHeight - messages.scrollTop - messages.clientHeight < threshold;
+  };
+  var appendMessage = (content, type) => {
+    const shouldScroll = isNearBottom();
+    const wrapperEl = document.createElement("div");
+    wrapperEl.className = `venna-msg venna-msg--${type}`;
+    const bubble = document.createElement("div");
+    bubble.className = "venna-msg__bubble venna-msg__enter";
+    bubble.textContent = content;
+    wrapperEl.appendChild(bubble);
+    messages.appendChild(wrapperEl);
+    if (shouldScroll) {
+      messages.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
     }
   };
-
-  if (document.startViewTransition) {
-    document.startViewTransition(runToggle);
-  } else {
-    runToggle();
-  }
-};
-
-orb.addEventListener("click", togglePanel);
-closeButton.addEventListener("click", togglePanel);
-
-const sendQuestion = async () => {
-  const question = input.value.trim();
-  if (!question) return;
-  appendMessage(question, "user");
-  input.value = "";
-  showTyping(true);
-  await ensureToken();
-  const response = await fetch(`${apiBase}/api/widget/answer`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Venna-Token": state.token,
-    },
-    body: JSON.stringify({ venueId, question }),
-  });
-  showTyping(false);
-  if (!response.ok) {
-    appendMessage("We could not reach the venue right now.", "assistant");
-    return;
-  }
-  const data = (await response.json()) as {
-    answer: string;
-    confidence: number;
+  var showTyping = (visible) => {
+    typing.style.display = visible ? "inline-flex" : "none";
   };
-  appendMessage(data.answer, "assistant");
-  if (data.confidence < 0.7) {
-    appendMessage("I'll ask staff to confirm.", "assistant");
-  }
-};
-
-send.addEventListener("click", () => {
-  sendQuestion().catch(() => undefined);
-});
-
-input.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    sendQuestion().catch(() => undefined);
-  }
-});
+  var togglePanel = () => {
+    const nextOpen = !state.open;
+    const runToggle = () => {
+      state.open = nextOpen;
+      panel.classList.toggle("is-open", state.open);
+      if (state.open) {
+        ensureToken().catch(() => void 0);
+      }
+    };
+    if (document.startViewTransition) {
+      document.startViewTransition(runToggle);
+    } else {
+      runToggle();
+    }
+  };
+  orb.addEventListener("click", togglePanel);
+  closeButton.addEventListener("click", togglePanel);
+  var sendQuestion = async () => {
+    const question = input.value.trim();
+    if (!question) return;
+    appendMessage(question, "user");
+    input.value = "";
+    showTyping(true);
+    await ensureToken();
+    const response = await fetch(`${apiBase}/api/widget/answer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Venna-Token": state.token
+      },
+      body: JSON.stringify({ venueId, question })
+    });
+    showTyping(false);
+    if (!response.ok) {
+      appendMessage("We could not reach the venue right now.", "assistant");
+      return;
+    }
+    const data = await response.json();
+    appendMessage(data.answer, "assistant");
+    if (data.confidence < 0.7) {
+      appendMessage("I'll ask staff to confirm.", "assistant");
+    }
+  };
+  send.addEventListener("click", () => {
+    sendQuestion().catch(() => void 0);
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendQuestion().catch(() => void 0);
+    }
+  });
+})();
+//# sourceMappingURL=ui.js.map
