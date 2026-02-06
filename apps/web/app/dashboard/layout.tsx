@@ -1,7 +1,8 @@
 import Link from "next/link";
+import type { Route } from "next";
 import type { ReactNode } from "react";
 
-const nav = [
+const nav: Array<{ href: Route; label: string }> = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/conversations", label: "Conversations" },
   { href: "/dashboard/escalations", label: "Escalations" },
