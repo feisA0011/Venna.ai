@@ -15,6 +15,9 @@ export const ingestDocument = mutation({
       title: args.title,
       content: args.content,
       source: args.source,
+      sourceUrl: args.source,
+      status: "pending",
+      extractedAt: Date.now(),
       createdAt: Date.now()
     });
     const vector = fakeEmbed(`${args.title}\n${args.content}`);
@@ -37,7 +40,7 @@ export const searchDocuments = query({
   handler: async (ctx, args) => {
     const docs = await ctx.db
       .query("documents")
-      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
+      .withIndex("by_venue_status", (q) => q.eq("venueId", args.venueId).eq("status", "approved"))
       .collect();
     const embeddings = await ctx.db
       .query("embeddings")
@@ -61,7 +64,25 @@ export const searchDocuments = query({
         id: item.doc._id,
         title: item.doc.title,
         content: item.doc.content,
+        sourceUrl: item.doc.sourceUrl,
         score: item.score
       }));
+  }
+});
+
+export const setDocumentStatus = mutation({
+  args: {
+    venueId: v.id("venues"),
+    documentId: v.id("documents"),
+    status: v.union(v.literal("approved"), v.literal("rejected"))
+  },
+  handler: async (ctx, args) => {
+    const document = await ctx.db.get(args.documentId);
+    if (!document || document.venueId !== args.venueId) {
+      throw new Error("Document not found for venue");
+    }
+
+    await ctx.db.patch(args.documentId, { status: args.status });
+    return { ok: true };
   }
 });

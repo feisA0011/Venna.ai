@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const nav = [
+const nav: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/onboarding", label: "Onboarding" },
   { href: "/dashboard/conversations", label: "Conversations" },
   { href: "/dashboard/escalations", label: "Escalations" },
   { href: "/dashboard/knowledge", label: "Knowledge" },
@@ -25,7 +26,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {nav.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href as never}
                 className="hover:text-neutral-900"
               >
                 {item.label}

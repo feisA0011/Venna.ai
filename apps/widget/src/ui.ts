@@ -23,6 +23,7 @@ const apiBase = scriptTag?.dataset.apiBase ?? "";
 const state = {
   open: false,
   token: "",
+  conversationId: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `conv_${Date.now()}`,
   theme: {
     accent: "#fe1541",
     background: "rgba(255,255,255,0.16)",
@@ -550,7 +551,7 @@ const sendQuestion = async () => {
       "Content-Type": "application/json",
       "X-Venna-Token": state.token,
     },
-    body: JSON.stringify({ venueId, question }),
+    body: JSON.stringify({ venueId, conversationId: state.conversationId, question }),
   });
   showTyping(false);
   if (!response.ok) {
@@ -558,12 +559,14 @@ const sendQuestion = async () => {
     return;
   }
   const data = (await response.json()) as {
-    answer: string;
+    type: "answer" | "escalation";
+    message: string;
     confidence: number;
+    sources: string[];
   };
-  appendMessage(data.answer, "assistant");
-  if (data.confidence < 0.7) {
-    appendMessage("I'll ask staff to confirm.", "assistant");
+  appendMessage(data.message, "assistant");
+  if (data.type === "escalation") {
+    appendMessage("I've escalated this to venue staff.", "assistant");
   }
 };
 
