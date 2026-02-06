@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "node --test lib/decision-pipeline.test.js"
+    "test": "node --test lib/*.test.js"
   },
   "dependencies": {
     "@venna/ui": "workspace:*",

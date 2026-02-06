@@ -5,6 +5,10 @@ export default defineSchema({
   venues: defineTable({
     name: v.string(),
     locale: v.string(),
+    allowedDomains: v.array(v.string()),
+    minutesSavedPerAutoAnswer: v.number(),
+    hourlyCostEur: v.number(),
+    escalationSlaMinutes: v.number(),
     policy: v.optional(v.string()),
     confidenceThreshold: v.number()
   }),
@@ -25,6 +29,19 @@ export default defineSchema({
     title: v.string(),
     content: v.string(),
     source: v.string(),
+    sourceUrl: v.optional(v.string()),
+    status: v.string(),
+    extractedAt: v.optional(v.number()),
+    hash: v.optional(v.string()),
+    createdAt: v.number()
+  })
+    .index("by_venue", ["venueId"])
+    .index("by_venue_status", ["venueId", "status"]),
+  ingestionJobs: defineTable({
+    venueId: v.id("venues"),
+    url: v.string(),
+    status: v.string(),
+    logs: v.array(v.string()),
     createdAt: v.number()
   }).index("by_venue", ["venueId"]),
   embeddings: defineTable({

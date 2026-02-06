@@ -24,12 +24,14 @@ const defaultVenueData = {
         id: "doc_hours",
         title: "Opening Hours",
         source: "ops/venue-handbook.md",
+        status: "approved",
         content: "We are open every day from 8am to 10pm. Kitchen closes at 9:30pm."
       },
       {
         id: "doc_allergens",
         title: "Allergen Policy",
         source: "ops/allergen-policy.md",
+        status: "approved",
         content:
           "For allergen requests staff must verify current ingredients. Menu can change daily and guest safety is priority."
       },
@@ -37,6 +39,7 @@ const defaultVenueData = {
         id: "doc_reservations",
         title: "Reservation Policy",
         source: "ops/reservations.md",
+        status: "pending",
         content: "Reservations may be changed up to 2 hours before booking time, subject to availability."
       }
     ],
@@ -111,6 +114,7 @@ export const handleMessage = ({ venueId, conversationId, text }) => {
   }
 
   const rankedDocs = venue.docs
+    .filter((doc) => doc.status === "approved")
     .map((doc) => ({ doc, score: similarity(text, doc.content) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)

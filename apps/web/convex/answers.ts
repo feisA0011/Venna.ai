@@ -39,7 +39,7 @@ export const answerQuestion = mutation({
 
     const documents = await ctx.db
       .query("documents")
-      .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))
+      .withIndex("by_venue_status", (q) => q.eq("venueId", args.venueId).eq("status", "approved"))
       .collect();
     const embeddings = await ctx.db
       .query("embeddings")
