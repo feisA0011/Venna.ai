@@ -1,5 +1,6 @@
 import { mutation } from "convex/server";
 import { v } from "convex/values";
+import { markEscalationResolved } from "../lib/venue-analytics";
 
 export const createEscalation = mutation({
   args: {
@@ -25,15 +26,27 @@ export const resolveEscalation = mutation({
     resolution: v.string()
   },
   handler: async (ctx, args) => {
+    const escalation = await ctx.db.get(args.escalationId);
+    if (!escalation) {
+      throw new Error("Escalation not found");
+    }
+
+    const resolvedAt = Date.now();
     await ctx.db.patch(args.escalationId, {
       status: "resolved",
-      resolvedAt: Date.now()
+      resolvedAt
     });
     await ctx.db.insert("outcomes", {
       escalationId: args.escalationId,
       resolution: args.resolution,
       verified: true,
-      createdAt: Date.now()
+      createdAt: resolvedAt
+    });
+
+    markEscalationResolved({
+      venueId: String(escalation.venueId),
+      createdAt: escalation.createdAt,
+      resolvedAt
     });
     return { ok: true };
   }

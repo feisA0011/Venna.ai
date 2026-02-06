@@ -41,7 +41,10 @@ const build = async () => {
         "Content-Type": req.url.endsWith(".js")
           ? "application/javascript"
           : "text/plain",
-        "Access-Control-Allow-Origin": "*", // Allow CORS
+        "Access-Control-Allow-Origin": "*",
+        "Content-Security-Policy": "default-src 'none'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
       });
       res.end(data);
     });

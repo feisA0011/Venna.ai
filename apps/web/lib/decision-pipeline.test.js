@@ -36,3 +36,15 @@ test("escalates when no citations are found", () => {
   assert.equal(escalations.length, 1);
   assert.equal(escalations[0].conversationId, "conv_2");
 });
+
+test("ignores pending documents and escalates when only pending doc matches", () => {
+  __resetDecisionStateForTests();
+  const result = handleMessage({
+    venueId: "demo-venue",
+    conversationId: "conv_3",
+    text: "How can I change my reservation?"
+  });
+
+  assert.equal(result.type, "escalation");
+  assert.equal(result.sources.includes("ops/reservations.md"), false);
+});
