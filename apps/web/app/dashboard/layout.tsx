@@ -1,9 +1,10 @@
 import Link from "next/link";
-import type { Route } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { VenueSwitcher } from "./venue-switcher";
 
-const nav: Array<{ href: Route; label: string }> = [
+const nav: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/onboarding", label: "Onboarding" },
   { href: "/dashboard/conversations", label: "Conversations" },
   { href: "/dashboard/escalations", label: "Escalations" },
   { href: "/dashboard/knowledge", label: "Knowledge" },
@@ -23,10 +24,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <h2 className="text-lg font-semibold">Venna Dashboard</h2>
           </div>
           <nav className="flex gap-3 text-sm text-neutral-600">
+            <Suspense fallback={null}>
+              <VenueSwitcher />
+            </Suspense>
             {nav.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href as never}
                 className="hover:text-neutral-900"
               >
                 {item.label}
