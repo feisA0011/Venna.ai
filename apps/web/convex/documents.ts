@@ -1,15 +1,19 @@
 import { mutation, query } from "convex/server";
 import { v } from "convex/values";
 import { cosineSimilarity, fakeEmbed } from "./ai";
+import { requireVenueAccess } from "./access";
 
 export const ingestDocument = mutation({
   args: {
+    userId: v.string(),
     venueId: v.id("venues"),
     title: v.string(),
     content: v.string(),
     source: v.string()
   },
   handler: async (ctx, args) => {
+    await requireVenueAccess(ctx, args, "staff");
+
     const documentId = await ctx.db.insert("documents", {
       venueId: args.venueId,
       title: args.title,
@@ -29,11 +33,14 @@ export const ingestDocument = mutation({
 
 export const searchDocuments = query({
   args: {
+    userId: v.string(),
     venueId: v.id("venues"),
     query: v.string(),
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    await requireVenueAccess(ctx, args, "viewer");
+
     const docs = await ctx.db
       .query("documents")
       .withIndex("by_venue", (q) => q.eq("venueId", args.venueId))

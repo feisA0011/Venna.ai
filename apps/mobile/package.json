@@ -13,7 +13,7 @@
     "expo": "^51.0.28",
     "react": "19.0.0",
     "react-native": "0.74.5",
-    "@clerk/clerk-expo": "^0.21.0"
+    "@clerk/clerk-expo": "^0.20.36"
   },
   "devDependencies": {
     "@venna/config": "workspace:*",
