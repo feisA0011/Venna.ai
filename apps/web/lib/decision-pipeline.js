@@ -24,12 +24,14 @@ const defaultVenueData = {
         id: "doc_hours",
         title: "Opening Hours",
         source: "ops/venue-handbook.md",
+        status: "approved",
         content: "We are open every day from 8am to 10pm. Kitchen closes at 9:30pm."
       },
       {
         id: "doc_allergens",
         title: "Allergen Policy",
         source: "ops/allergen-policy.md",
+        status: "approved",
         content:
           "For allergen requests staff must verify current ingredients. Menu can change daily and guest safety is priority."
       },
@@ -37,6 +39,7 @@ const defaultVenueData = {
         id: "doc_reservations",
         title: "Reservation Policy",
         source: "ops/reservations.md",
+        status: "pending",
         content: "Reservations may be changed up to 2 hours before booking time, subject to availability."
       }
     ],
@@ -84,6 +87,16 @@ const ensureVenue = (venueId) => {
   return venue;
 };
 
+const ensureEscalation = ({ venueId, escalationId }) => {
+  const escalation = state.escalations.find(
+    (item) => item.id === escalationId && item.venueId === venueId
+  );
+  if (!escalation) {
+    throw new Error("Escalation not found");
+  }
+  return escalation;
+};
+
 export const handleMessage = ({ venueId, conversationId, text }) => {
   const venue = ensureVenue(venueId);
 
@@ -111,6 +124,7 @@ export const handleMessage = ({ venueId, conversationId, text }) => {
   }
 
   const rankedDocs = venue.docs
+    .filter((doc) => doc.status === "approved")
     .map((doc) => ({ doc, score: similarity(text, doc.content) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
@@ -123,15 +137,24 @@ export const handleMessage = ({ venueId, conversationId, text }) => {
   const shouldEscalate = llmDraft.confidence < venue.confidenceThreshold || !hasCitations;
 
   if (shouldEscalate) {
+    const createdAt = Date.now();
     const escalation = {
-      id: `esc_${Date.now()}`,
+      id: `esc_${createdAt}`,
       venueId,
       conversationId,
       reason: !hasCitations ? "No supporting citations" : "Low model confidence",
       userMessage: text,
       confidence: llmDraft.confidence,
-      createdAt: Date.now(),
-      status: "open"
+      createdAt,
+      status: "open",
+      thread: [
+        {
+          id: `msg_${createdAt}`,
+          role: "guest",
+          message: text,
+          createdAt
+        }
+      ]
     };
     state.escalations.push(escalation);
     state.logs.push({
@@ -175,8 +198,61 @@ export const handleMessage = ({ venueId, conversationId, text }) => {
   };
 };
 
-export const listEscalations = ({ venueId }) =>
-  state.escalations.filter((item) => item.venueId === venueId).sort((a, b) => b.createdAt - a.createdAt);
+export const listEscalations = ({ venueId, status = "open" }) =>
+  state.escalations
+    .filter((item) => item.venueId === venueId)
+    .filter((item) => (status ? item.status === status : true))
+    .sort((a, b) => b.createdAt - a.createdAt);
+
+export const getEscalationById = ({ venueId, escalationId }) =>
+  ensureEscalation({ venueId, escalationId });
+
+export const replyToEscalation = ({
+  venueId,
+  escalationId,
+  userId,
+  message,
+  verifiedAnswer = false,
+  resolve = false
+}) => {
+  if (!message.trim()) {
+    throw new Error("Reply message is required");
+  }
+
+  const venue = ensureVenue(venueId);
+  const escalation = ensureEscalation({ venueId, escalationId });
+
+  if (escalation.status !== "open") {
+    throw new Error("Escalation is already resolved");
+  }
+
+  const createdAt = Date.now();
+  escalation.thread.push({
+    id: `msg_${createdAt}`,
+    role: "staff",
+    userId,
+    message,
+    createdAt,
+    verifiedAnswer
+  });
+
+  if (verifiedAnswer) {
+    venue.verifiedMemory.push({
+      question: escalation.userMessage,
+      answer: message,
+      confidence: 1,
+      sources: [`staff:${userId}`],
+      verified: true
+    });
+  }
+
+  if (resolve) {
+    escalation.status = "resolved";
+    escalation.resolvedAt = createdAt;
+  }
+
+  return escalation;
+};
 
 export const listLogs = ({ venueId }) =>
   state.logs.filter((item) => item.venueId === venueId).sort((a, b) => b.createdAt - a.createdAt);

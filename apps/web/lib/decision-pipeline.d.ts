@@ -5,6 +5,15 @@ export type DecisionResult = {
   sources: string[];
 };
 
+export type EscalationThreadMessage = {
+  id: string;
+  role: "guest" | "staff";
+  message: string;
+  createdAt: number;
+  userId?: string;
+  verifiedAnswer?: boolean;
+};
+
 export type EscalationRecord = {
   id: string;
   venueId: string;
@@ -14,6 +23,8 @@ export type EscalationRecord = {
   confidence: number;
   createdAt: number;
   status: string;
+  resolvedAt?: number;
+  thread: EscalationThreadMessage[];
 };
 
 export type LogRecord = {
@@ -31,6 +42,15 @@ export function handleMessage(input: {
   text: string;
 }): DecisionResult;
 
-export function listEscalations(input: { venueId: string }): EscalationRecord[];
+export function listEscalations(input: { venueId: string; status?: "open" | "resolved" | null }): EscalationRecord[];
+export function getEscalationById(input: { venueId: string; escalationId: string }): EscalationRecord;
+export function replyToEscalation(input: {
+  venueId: string;
+  escalationId: string;
+  userId: string;
+  message: string;
+  verifiedAnswer?: boolean;
+  resolve?: boolean;
+}): EscalationRecord;
 export function listLogs(input: { venueId: string }): LogRecord[];
 export function __resetDecisionStateForTests(): void;
